@@ -1,0 +1,18 @@
+{
+  "name": "NetPulse La Paz — Emulador QoS e IA",
+  "short_name": "NetPulse LP",
+  "description": "Prototipo PWA de monitoreo colaborativo, diagnóstico orientativo y predicción de degradación QoS por macrodistritos en La Paz (UMSA 2026).",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080d17",
+  "theme_color": "#0ea5e9",
+  "lang": "es-BO",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
