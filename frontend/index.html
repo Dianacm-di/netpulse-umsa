@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <title>NetPulse La Paz — Emulador QoS &amp; IA por Macrodistritos</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <img src="/icon.svg" alt="NetPulse La Paz" class="brand-icon" />
+        <div>
+          <h1>
+            NetPulse La Paz
+            <span class="badge-pill">EMULADOR PWA + IA</span>
+          </h1>
+          <div class="brand-sub">UMSA · Carrera de Informática · QoS por Macrodistritos (UIT-T Y.1540)</div>
+        </div>
+      </div>
+
+      <nav class="nav-tabs" aria-label="Vistas del sistema">
+        <button class="nav-btn active" data-tab="emulador">1. Emulador de Prueba</button>
+        <button class="nav-btn" data-tab="mapa">2. Mapa La Paz</button>
+        <button class="nav-btn" data-tab="analitica">3. Analítica y Tendencias</button>
+        <button class="nav-btn" data-tab="ia">4. Laboratorio IA &amp; UMSA</button>
+      </nav>
+
+      <div class="status-strip">
+        <span class="dot-live"></span>
+        <span id="header-status">Cargando modelo IA...</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="notice-banner">
+      <div>
+        <strong>Prototipo académico orientativo:</strong> Las pruebas emuladas y mediciones colaborativas usan ubicación aproximada por macrodistrito (sin datos personales) y referencias técnicas <strong>UIT-T Y.1540 / ATT</strong>. No reemplazan auditorías oficiales.
+      </div>
+      <span class="badge-pill" id="badge-total-registros">0 registros</span>
+    </div>
+
+    <!-- VISTA 1: EMULADOR DE PRUEBA QOS -->
+    <section id="view-emulador" class="tab-panel active">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Configurar Prueba / Escenario</h2>
+              <div class="card-subtitle">Contexto geográfico, operador y simulación de condiciones de red</div>
+            </div>
+          </div>
+
+          <form id="form-emulador" novalidate>
+            <div class="form-group">
+              <label for="emu-sector">Macrodistrito / Sector aproximado</label>
+              <select id="emu-sector" class="form-control"></select>
+            </div>
+
+            <div class="form-group">
+              <label for="emu-proveedor">Proveedor (ISP declarado)</label>
+              <select id="emu-proveedor" class="form-control"></select>
+            </div>
+
+            <div class="form-group">
+              <label for="emu-tecnologia">Tecnología de acceso</label>
+              <select id="emu-tecnologia" class="form-control"></select>
+            </div>
+
+            <div class="form-group">
+              <label for="emu-hora">
+                <span>Hora del día a emular</span>
+                <span id="emu-hora-label">20:00 (Pico Nocturno)</span>
+              </label>
+              <input id="emu-hora" type="range" min="0" max="23" value="20" />
+            </div>
+
+            <div class="form-group">
+              <label for="emu-escenario">Escenario de emulación</label>
+              <select id="emu-escenario" class="form-control">
+                <option value="auto_contexto">Automático según zona, tecnología y hora</option>
+                <option value="optima_ftth">Escenario: Fibra Óptica estable (Óptima)</option>
+                <option value="wifi_saturado">Falla: Wi-Fi saturado / interferencia local</option>
+                <option value="congestion_nocturna">Falla: Congestión nocturna en acceso ISP</option>
+                <option value="ruta_dns_lenta">Falla: Demora en DNS / ruta externa</option>
+                <option value="microcortes_severos">Falla: Microcortes y pérdida severa</option>
+                <option value="manual">Modo Laboratorio Manual (ajustar métricas)</option>
+              </select>
+            </div>
+
+            <div id="manual-box" class="manual-box" style="display: none;">
+              <div class="card-subtitle" style="margin-bottom: 8px;">Parámetros manuales para evaluar el clasificador IA:</div>
+              <div class="manual-grid">
+                <div class="form-group">
+                  <label for="man-down">Descarga (Mbps)</label>
+                  <input id="man-down" type="number" step="any" min="0.5" max="500" value="35" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="man-up">Subida (Mbps)</label>
+                  <input id="man-up" type="number" step="any" min="0.2" max="300" value="15" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="man-lat">Latencia RTT (ms)</label>
+                  <input id="man-lat" type="number" step="any" min="5" max="500" value="42" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="man-jit">Jitter (ms)</label>
+                  <input id="man-jit" type="number" step="any" min="0.5" max="150" value="9" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="man-loss">Pérdida (%)</label>
+                  <input id="man-loss" type="number" step="any" min="0" max="30" value="0.2" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label for="man-dns">DNS (ms)</label>
+                  <input id="man-dns" type="number" step="any" min="5" max="500" value="29" class="form-control" />
+                </div>
+              </div>
+            </div>
+
+            <label class="checkbox-row">
+              <input id="emu-guardar" type="checkbox" checked />
+              <span>Aportar medición anónima al histórico colaborativo de La Paz (solo macrodistrito aproximado, sin dirección exacta).</span>
+            </label>
+
+            <button id="btn-ejecutar" type="submit" class="btn btn-primary">
+              ▶ Ejecutar Prueba Emulada QoS
+            </button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Monitor de Medición en Tiempo Real</h2>
+              <div class="card-subtitle" id="emu-context-summary">Listo para iniciar sonda emulada en Centro · Entel</div>
+            </div>
+            <span id="emu-badge-clase" class="qos-badge qos-Aceptable">En espera</span>
+          </div>
+
+          <div class="gauge-layout">
+            <div class="gauge-wrap">
+              <svg viewBox="0 0 240 185" width="240" height="185">
+                <path d="M 42 155 A 90 90 0 1 1 198 155" fill="none" stroke="#1e293b" stroke-width="16" stroke-linecap="round" />
+                <path id="gauge-arc" d="M 42 155 A 90 90 0 1 1 198 155" fill="none" stroke="#22d3ee" stroke-width="16" stroke-linecap="round" stroke-dasharray="378" stroke-dashoffset="378" />
+              </svg>
+              <div class="gauge-center">
+                <div class="gauge-value" id="gauge-val">0.0</div>
+                <div class="gauge-unit" id="gauge-unit">Mbps</div>
+                <div class="gauge-phase" id="gauge-phase">Esperando inicio</div>
+              </div>
+            </div>
+
+            <div>
+              <div class="metric-grid">
+                <div class="metric-box">
+                  <div class="metric-label">Descarga</div>
+                  <div class="metric-val" id="m-down">--</div>
+                  <div class="metric-sub">Mbps</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-label">Subida</div>
+                  <div class="metric-val" id="m-up">--</div>
+                  <div class="metric-sub">Mbps</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-label">Latencia RTT</div>
+                  <div class="metric-val" id="m-lat">--</div>
+                  <div class="metric-sub">ms (UIT-T Y.1540)</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-label">Jitter</div>
+                  <div class="metric-val" id="m-jit">--</div>
+                  <div class="metric-sub">ms variación</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-label">Pérdida</div>
+                  <div class="metric-val" id="m-loss">--</div>
+                  <div class="metric-sub">% paquetes</div>
+                </div>
+                <div class="metric-box">
+                  <div class="metric-label">Resolución DNS</div>
+                  <div class="metric-val" id="m-dns">--</div>
+                  <div class="metric-sub">ms consulta</div>
+                </div>
+              </div>
+
+              <div class="progress-track">
+                <div id="emu-progress" class="progress-fill"></div>
+              </div>
+              <div class="card-subtitle">Traza de 10 sondas RTT simuladas:</div>
+              <div id="ping-strip" class="ping-strip">
+                <span class="ping-chip">Sin traza aún</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="diag-panel" class="diag-card" style="display: none;">
+            <div class="card-header" style="margin-bottom: 8px;">
+              <div>
+                <h3 class="card-title" style="font-size: 0.96rem;">Diagnóstico Orientativo de Inteligencia Artificial</h3>
+                <div class="card-subtitle" id="diag-origen">--</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Índice de degradación</div>
+                <strong id="diag-indice" style="font-size: 1.15rem; color: var(--cyan);">-- / 100</strong>
+              </div>
+            </div>
+
+            <div class="diag-grid">
+              <div>
+                <div id="diag-hipotesis"></div>
+                <div style="margin-top: 10px;">
+                  <strong style="font-size: 0.8rem; color: #cbd5e1;">Comprobaciones sugeridas (no invasivas):</strong>
+                  <ul id="diag-recs" style="margin: 6px 0 0 18px; padding: 0; font-size: 0.82rem; color: #cbd5e1;"></ul>
+                </div>
+              </div>
+
+              <div>
+                <strong style="font-size: 0.8rem; color: #cbd5e1;">Probabilidad por clase (Random Forest):</strong>
+                <div id="diag-probs" style="margin-top: 8px;"></div>
+
+                <strong style="font-size: 0.8rem; color: #cbd5e1; display: block; margin-top: 10px;">Experiencia estimada por actividad:</strong>
+                <div id="diag-aptitud" class="aptitud-grid"></div>
+              </div>
+            </div>
+
+            <div id="diag-validez" class="validity-note"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISTA 2: MAPA INTERACTIVO LA PAZ -->
+    <section id="view-mapa" class="tab-panel">
+      <div class="filter-bar">
+        <div class="filter-item">
+          <label for="map-filter-isp">Proveedor (ISP)</label>
+          <select id="map-filter-isp" class="form-control"></select>
+        </div>
+        <div class="filter-item">
+          <label for="map-filter-tec">Tecnología</label>
+          <select id="map-filter-tec" class="form-control"></select>
+        </div>
+        <div class="filter-item">
+          <label for="map-filter-franja">Franja horaria</label>
+          <select id="map-filter-franja" class="form-control"></select>
+        </div>
+        <div>
+          <button id="btn-map-refresh" class="btn btn-secondary">Actualizar mapa</button>
+        </div>
+      </div>
+
+      <div class="grid-map">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Mapa Topográfico de Macrodistritos — La Paz</h2>
+              <div class="card-subtitle">Haz clic en un macrodistrito para inspeccionar su muestra, confianza y degradación promedio</div>
+            </div>
+            <span class="badge-pill" id="map-total-pill">0 muestras</span>
+          </div>
+
+          <div class="map-stage">
+            <svg id="lapaz-map-svg" class="map-svg" viewBox="0 0 880 740" role="img" aria-label="Mapa de Macrodistritos de La Paz"></svg>
+          </div>
+
+          <div class="map-legend">
+            <div class="legend-item"><span class="legend-swatch" style="background: #10b981;"></span> Óptima (Deg &lt; 18)</div>
+            <div class="legend-item"><span class="legend-swatch" style="background: #38bdf8;"></span> Aceptable (18–34)</div>
+            <div class="legend-item"><span class="legend-swatch" style="background: #f59e0b;"></span> Degradada (35–55)</div>
+            <div class="legend-item"><span class="legend-swatch" style="background: #ef4444;"></span> Crítica (&gt; 55)</div>
+            <div class="legend-item"><span class="legend-swatch" style="background: #475569;"></span> Sin muestras suficientes</div>
+          </div>
+        </div>
+
+        <div class="card" id="map-detail-card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title" id="det-nombre">Centro</h2>
+              <div class="card-subtitle" id="det-meta">Hoyada Central · 3,640 m s. n. m.</div>
+            </div>
+            <span id="det-clase" class="qos-badge qos-Aceptable">--</span>
+          </div>
+
+          <div class="metric-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 12px;">
+            <div class="metric-box">
+              <div class="metric-label">Descarga promedio</div>
+              <div class="metric-val" id="det-down">--</div>
+              <div class="metric-sub">Mbps</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Latencia promedio</div>
+              <div class="metric-val" id="det-lat">--</div>
+              <div class="metric-sub">ms RTT</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Jitter / Pérdida</div>
+              <div class="metric-val" id="det-jit-loss">--</div>
+              <div class="metric-sub">ms / %</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Degradación media</div>
+              <div class="metric-val" id="det-deg">--</div>
+              <div class="metric-sub">Índice 0–100</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px;">
+            <div class="card-subtitle" style="margin-bottom: 6px;">Distribución de calidad observada (<span id="det-n">0</span> muestras · <strong id="det-confianza">--</strong>):</div>
+            <div id="det-dist"></div>
+          </div>
+
+          <div class="validity-note" style="margin-bottom: 12px;">
+            Las ubicaciones individuales mostradas tienen desplazamiento aleatorio de privacidad (~400 m) para proteger domicilios. Los resultados reflejan participación voluntaria, no censo oficial.
+          </div>
+
+          <button id="btn-emular-sector" class="btn btn-primary">
+            Emular prueba en este sector →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISTA 3: ANALÍTICA Y TENDENCIAS -->
+    <section id="view-analitica" class="tab-panel">
+      <div class="filter-bar">
+        <div class="filter-item">
+          <label for="ana-filter-sector">Macrodistrito / Sector</label>
+          <select id="ana-filter-sector" class="form-control"></select>
+        </div>
+        <div class="filter-item">
+          <label for="ana-filter-isp">Proveedor</label>
+          <select id="ana-filter-isp" class="form-control"></select>
+        </div>
+        <div class="filter-item">
+          <label for="ana-filter-tec">Tecnología</label>
+          <select id="ana-filter-tec" class="form-control"></select>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-ana-refresh" class="btn btn-secondary">Aplicar filtros</button>
+          <a href="/api/exportar-csv" class="btn btn-secondary" style="text-decoration: none;">⬇ Exportar CSV</a>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Muestras (n)</div>
+          <div class="kpi-val" id="kpi-n">--</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Descarga media</div>
+          <div class="kpi-val" id="kpi-down">--</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Latencia media</div>
+          <div class="kpi-val" id="kpi-lat">--</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Jitter medio</div>
+          <div class="kpi-val" id="kpi-jit">--</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Pérdida media</div>
+          <div class="kpi-val" id="kpi-loss">--</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Degradación</div>
+          <div class="kpi-val" id="kpi-deg">--</div>
+        </div>
+      </div>
+
+      <div class="grid-charts" style="margin-bottom: 18px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Predicción Horaria de Degradación (IA vs Observado)</h2>
+              <div class="card-subtitle">Índice de riesgo estimado (0–100) con banda de incertidumbre según densidad de muestras</div>
+            </div>
+          </div>
+          <canvas id="chart-horaria" class="chart-canvas"></canvas>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Comparativa Controlada por Tecnología</h2>
+              <div class="card-subtitle">Descarga promedio (Mbps) e índice de degradación por tipo de acceso</div>
+            </div>
+          </div>
+          <canvas id="chart-tecnologia" class="chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <div class="grid-equal">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Resumen por Proveedor Declarado</h2>
+              <div class="card-subtitle">Solo válido controlando tecnología, zona y tamaño de muestra (n)</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Proveedor</th>
+                  <th>n</th>
+                  <th>Descarga</th>
+                  <th>Latencia</th>
+                  <th>Pérdida</th>
+                  <th>Confianza</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-proveedores"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Últimas Mediciones Registradas</h2>
+              <div class="card-subtitle">Historial reciente en base de datos SQLite</div>
+            </div>
+          </div>
+          <div class="table-wrap" style="max-height: 310px; overflow-y: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Sector</th>
+                  <th>Hora</th>
+                  <th>ISP / Tec.</th>
+                  <th>Desc / Lat</th>
+                  <th>Clase QoS</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-historial"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISTA 4: LABORATORIO IA & PROPUESTA UMSA -->
+    <section id="view-ia" class="tab-panel">
+      <div class="kpi-row" style="grid-template-columns: repeat(5, 1fr);">
+        <div class="kpi-card">
+          <div class="kpi-label">Versión Modelo</div>
+          <div class="kpi-val" id="ia-version" style="font-size: 1.05rem;">--</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Accuracy (Test 25%)</div>
+          <div class="kpi-val" id="ia-acc">--</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">F1-Score Macro</div>
+          <div class="kpi-val" id="ia-f1">--</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">MAE Degradación</div>
+          <div class="kpi-val" id="ia-mae">--</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">RMSE Degradación</div>
+          <div class="kpi-val" id="ia-rmse">--</div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px;">
+        <button id="btn-reentrenar" class="btn btn-primary" style="width: auto;">
+          ↻ Re-entrenar Modelos con Datos Actuales
+        </button>
+        <button id="btn-reset-piloto" class="btn btn-secondary">
+          ↺ Restaurar Dataset Piloto (280 muestras)
+        </button>
+        <span id="ia-train-msg" style="align-self: center; font-size: 0.84rem; color: var(--cyan);"></span>
+      </div>
+
+      <div class="grid-equal" style="margin-bottom: 18px;">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Matriz de Confusión (RandomForestClassifier)</h2>
+              <div class="card-subtitle">Evaluación sobre conjunto de prueba estratificado (n_estimators=150, balanced)</div>
+            </div>
+          </div>
+          <div class="table-wrap" id="ia-cm-wrap"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Importancia de Variables QoS</h2>
+              <div class="card-subtitle">Peso relativo de cada métrica UIT-T Y.1540 en el clasificador</div>
+            </div>
+          </div>
+          <div id="ia-importancias"></div>
+        </div>
+      </div>
+
+      <div class="grid-equal">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Métricas Detalladas por Clase</h2>
+              <div class="card-subtitle">Precision, Recall, F1 y soporte en evaluación</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Clase QoS</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1-Score</th>
+                  <th>Soporte</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-ia-clases"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Ficha Académica del Proyecto</h2>
+              <div class="card-subtitle">Universidad Mayor de San Andrés · Carrera de Informática · 2026</div>
+            </div>
+          </div>
+          <div style="font-size: 0.85rem; color: #cbd5e1;">
+            <p style="margin-top: 0;"><strong>Docente:</strong> Miguel Toledo Paz</p>
+            <p><strong>Universitarios:</strong></p>
+            <ul style="margin: 4px 0 10px 18px; padding: 0;">
+              <li>Canaza Mamani Diana — CI: 9965614</li>
+              <li>Martinez Cornejo Mauricio Cecilio — CI: 9902489</li>
+              <li>Gianina Madelein Rodriguez Mendez — CI: 9110875</li>
+            </ul>
+            <p><strong>Referencias técnicas:</strong> UIT-T Recomendación Y.1540 (desempeño de transferencia IP), ATT Bolivia (Resolución ATT-DJ-RAR-TL LP 299/2018 y SIS ATT), scikit-learn.</p>
+            <p style="margin-bottom: 0; color: var(--text-muted); font-size: 0.8rem;">
+              <em>Nota metodológica:</em> Los datos piloto iniciales son sintéticos calibrados para demostración académica del prototipo y flujo de IA; en despliegue real se nutren exclusivamente de mediciones voluntarias autorizadas.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>NetPulse La Paz · Prototipo PWA &amp; Emulador QoS (UMSA Informática 2026)</div>
+    <div>Backend: Starlette + SQLite + scikit-learn | Visualización: SVG Topográfico + Canvas</div>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
